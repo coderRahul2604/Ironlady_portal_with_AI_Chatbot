@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Iron Lady — FAQ Chatbot</h1>
+
+  <div id="chat-window" style="border:1px solid #ddd;padding:12px;height:320px;overflow:auto;">
+    <div id="messages"></div>
+  </div>
+
+  <form id="chat-form">
+    {% csrf_token %}
+    <input id="question" placeholder="Ask about programs, duration, certificates..." style="width:70%;" />
+    <button type="submit">Send</button>
+  </form>
+
+  <h3>Quick questions</h3>
+  <ul id="faq-list">
+    {% for f in faqs %}
+      <li><button class="quick-q" data-q="{{ f.question }}">{{ f.question }}</button></li>
+    {% endfor %}
+  </ul>
+
+<script>
+function getCSRF() {
+  const cookies = document.cookie.split(';').map(c => c.trim());
+  for (let c of cookies) {
+    if (c.startsWith('csrftoken=')) return c.split('=')[1];
+  }
+  return '';
+}
+
+function appendMessage(who, text) {
+  const div = document.createElement('div');
+  div.innerHTML = `<strong>${who}:</strong> ${text}`;
+  document.getElementById('messages').appendChild(div);
+  const win = document.getElementById('chat-window');
+  win.scrollTop = win.scrollHeight;
+}
+
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const q = document.getElementById('question').value.trim();
+  if(!q) return;
+  appendMessage('You', q);
+  document.getElementById('question').value = '';
+  const resp = await fetch("{% url 'chatbot:chat-ask' %}", {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': getCSRF()},
+    body: JSON.stringify({question: q})
+  });
+  const data = await resp.json();
+  appendMessage('Bot', data.answer);
+});
+
+document.querySelectorAll('.quick-q').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const q = btn.dataset.q;
+    appendMessage('You', q);
+    const resp = await fetch("{% url 'chatbot:chat-ask' %}", {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': getCSRF()},
+      body: JSON.stringify({question: q})
+    });
+    const data = await resp.json();
+    appendMessage('Bot', data.answer);
+  });
+});
+</script>
+{% endblock %}

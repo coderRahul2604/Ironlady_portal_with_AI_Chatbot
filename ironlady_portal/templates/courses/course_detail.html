@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>{{ object.title }}</h1>
+  <p>{{ object.description }}</p>
+  <ul>
+    <li>Duration: {{ object.duration_weeks }} weeks</li>
+    <li>Mode: {{ object.mode }}</li>
+    <li>Certificate: {{ object.certificate }}</li>
+    <li>Mentors: {{ object.mentors }}</li>
+  </ul>
+  <p><a href="{% url 'courses:course-edit' object.pk %}">Edit</a> | <a href="{% url 'courses:course-list' %}">Back</a></p>
+{% endblock %}
